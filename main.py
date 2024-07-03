@@ -16,9 +16,13 @@ class SpecimenAnalyser:
   driver = None
   folder_path = None
   items = []
+  htpass = None
+  baseUrl = None
 
-  def __init__(self, id, baseUrl, robots):
+  def __init__(self, id, baseUrl, robots, htpass = None):
     self.id = id
+    self.baseUrl = baseUrl
+    self.htpass = htpass
     self.folder_path = f'data/{self.id}'
     os.makedirs(self.folder_path, exist_ok = True)
     robotFile = requests.get(baseUrl + robots)
@@ -35,7 +39,10 @@ class SpecimenAnalyser:
       options = Options()
       options.add_argument('--headless')  # Ejecución sin interfaz gráfica
       driver = webdriver.Firefox(options = options)
-    driver.get(url.replace('https://', 'https://bbdev:bbdev@'))
+    if self.htpass != None:
+      driver.get(url.replace('https://', f'https://{self.htpass["user"]}:{self.htpass["pass"]}@'))
+    else:
+      driver.get(url)
     time.sleep(10)
     return driver.page_source
 
@@ -43,10 +50,12 @@ class SpecimenAnalyser:
     # if not site.checkUrl('spider:aa', '/'):
     #   return []
     if url == '/':
-      url = specimen['base_url']
+      url = self.baseUrl
+    elif 'sites/default/files' in url:
+      return []
     elif url.startswith('/'):
-      url = specimen['base_url'] + url
-    elif url.startswith(specimen['base_url']):
+      url = self.baseUrl + url
+    elif url.startswith(self.baseUrl):
       pass
     else:
       return []
@@ -65,6 +74,7 @@ class SpecimenAnalyser:
 
   def urlToFile(self, url):
     url = url.replace(specimen['base_url'], '')
+    url = url[:url.find('?')]
     parts = url.split('/')
     if len(parts) == 0 or (len(parts) == 1 and parts[0] == ''):
       return self.folder_path + '/index.html'
@@ -79,7 +89,7 @@ with open('specimens.yml', 'r') as file:
   config = yaml.safe_load(file)
 
 for specimen in config['specimens']:
-  site = SpecimenAnalyser(specimen['id'], specimen['base_url'], '/robots.txt')
+  site = SpecimenAnalyser(specimen['id'], specimen['base_url'], '/robots.txt', specimen['htpass'])
   pages = site.addLink('/')
   while len(pages) > 0:
     url = pages.pop()
@@ -87,5 +97,5 @@ for specimen in config['specimens']:
     pages = list(pages) + list(links)
     pages = list(dict.fromkeys(pages))
     # break
-  site.close()
+  # site.close()
   # break
