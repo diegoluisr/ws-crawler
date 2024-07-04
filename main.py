@@ -37,14 +37,14 @@ class SpecimenAnalyser:
   def loadPage(self, url):
     if self.driver == None:
       options = Options()
-      options.add_argument('--headless')  # Ejecución sin interfaz gráfica
-      driver = webdriver.Firefox(options = options)
+      options.add_argument('--headless')  # Running browser without UI.
+      self.driver = webdriver.Firefox(options = options)
     if self.htpass != None:
-      driver.get(url.replace('https://', f'https://{self.htpass["user"]}:{self.htpass["pass"]}@'))
+      self.driver.get(url.replace('https://', f'https://{self.htpass["user"]}:{self.htpass["pass"]}@'))
     else:
-      driver.get(url)
+      self.driver.get(url)
     time.sleep(10)
-    return driver.page_source
+    return self.driver.page_source
 
   def addLink(self, url):
     # if not site.checkUrl('spider:aa', '/'):
@@ -74,16 +74,20 @@ class SpecimenAnalyser:
 
   def urlToFile(self, url):
     url = url.replace(specimen['base_url'], '')
-    url = url[:url.find('?')]
+    if '?' in url:
+      url = url.split('?')[0]
+    if '#' in url:
+      url = url.split('#')[0]
     parts = url.split('/')
     if len(parts) == 0 or (len(parts) == 1 and parts[0] == ''):
       return self.folder_path + '/index.html'
     else:
       os.makedirs(self.folder_path + '/'.join(parts), exist_ok = True)
-      return self.folder_path + '/'.join(parts)  + '/index.html'
+      return self.folder_path + '/'.join(parts) + '/index.html'
 
   def close(self):
-    self.driver.close()
+    if self.driver != None:
+      self.driver.quit()
 
 with open('specimens.yml', 'r') as file:
   config = yaml.safe_load(file)
@@ -97,5 +101,5 @@ for specimen in config['specimens']:
     pages = list(pages) + list(links)
     pages = list(dict.fromkeys(pages))
     # break
-  # site.close()
+  site.close()
   # break
