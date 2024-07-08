@@ -70,17 +70,10 @@ class SpecimenAnalyser:
 
         soup = BeautifulSoup(content, 'html.parser')
 
-        for tag in soup.find_all('script'):
-          tag.decompose()
-
-        for tag in soup.find_all('noscript'):
-          tag.decompose()
-
-        for tag in soup.find_all('link'):
-          tag.decompose()
-
-        for tag in soup.find_all('style'):
-          tag.decompose()
+        tags = ['script', 'noscript', 'link', 'style']
+        for tagname in tags:
+          for tag in soup.find_all(tagname):
+            tag.decompose()
 
         div_bs4 = soup.find('div', {"class": "page-header__first"})
         div_bs4.decompose()
