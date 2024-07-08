@@ -65,10 +65,44 @@ class SpecimenAnalyser:
     if not os.path.isfile(file_path):
       with open(file_path, 'w') as file:
         content = self.loadPage(url)
-        file.write(content)
-        file.close()
+        linksoup = BeautifulSoup(content, 'html.parser')
+        links = linksoup.find_all('a', href=True)
+
         soup = BeautifulSoup(content, 'html.parser')
-        links = soup.find_all('a', href=True)
+
+        for tag in soup.find_all('script'):
+          tag.decompose()
+
+        for tag in soup.find_all('noscript'):
+          tag.decompose()
+
+        for tag in soup.find_all('link'):
+          tag.decompose()
+
+        for tag in soup.find_all('style'):
+          tag.decompose()
+
+        div_bs4 = soup.find('div', {"class": "page-header__first"})
+        div_bs4.decompose()
+
+        div_bs4 = soup.find('div', {"class": "breadcrumb-container"})
+        div_bs4.decompose()
+
+        div_bs4 = soup.find('div', {"class": "pre-footer"})
+        div_bs4.decompose()
+
+        div_bs4 = soup.find('footer', {"class": "page-footer"})
+        div_bs4.decompose()
+
+        div_bs4 = soup.find('div', {"id": "onetrust-consent-sdk"})
+        div_bs4.decompose()
+
+        div_bs4 = soup.find('div', {"id": "ally-af-launcher"})
+        div_bs4.decompose()
+
+        file.write(str(soup))
+        file.close()
+
         return set(link['href'] for link in links)
     return []
 
