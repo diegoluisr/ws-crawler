@@ -1,4 +1,4 @@
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Comment
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from robots import RobotsParser
@@ -76,22 +76,49 @@ class SpecimenAnalyser:
             tag.decompose()
 
         div_bs4 = soup.find('div', {"class": "page-header__first"})
-        div_bs4.decompose()
+        if div_bs4 != None:
+          div_bs4.decompose()
+
+        div_bs4 = soup.find('a', {"class": "visually-hidden"})
+        if div_bs4 != None:
+          div_bs4.decompose()
 
         div_bs4 = soup.find('div', {"class": "breadcrumb-container"})
-        div_bs4.decompose()
+        if div_bs4 != None:
+          div_bs4.decompose()
 
         div_bs4 = soup.find('div', {"class": "pre-footer"})
-        div_bs4.decompose()
+        if div_bs4 != None:
+          div_bs4.decompose()
 
         div_bs4 = soup.find('footer', {"class": "page-footer"})
-        div_bs4.decompose()
+        if div_bs4 != None:
+          div_bs4.decompose()
 
         div_bs4 = soup.find('div', {"id": "onetrust-consent-sdk"})
-        div_bs4.decompose()
+        if div_bs4 != None:
+          div_bs4.decompose()
 
         div_bs4 = soup.find('div', {"id": "ally-af-launcher"})
-        div_bs4.decompose()
+        if div_bs4 != None:
+          div_bs4.decompose()
+
+        # Find all comments
+        comments = soup.find_all(string=lambda text: isinstance(text, Comment))
+
+        # Remove all comments
+        for comment in comments:
+          comment.extract()
+
+        # Removing meta generator
+        div_bs4 = soup.find('meta', {"name": "Generator"})
+        if div_bs4 != None:
+          div_bs4.decompose()
+
+        # Removing empty tags
+        for x in soup.find_all():
+          if len(x.get_text(strip=True)) == 0 and x.name not in ['br', 'img', 'meta']:
+            x.extract()
 
         file.write(str(soup))
         file.close()
