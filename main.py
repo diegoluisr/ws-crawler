@@ -1,12 +1,13 @@
 from bs4 import BeautifulSoup, Comment
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
-from robots import RobotsParser
+# from robots import RobotsParser
 import datetime
 import hashlib
 import os
 import requests
 import time
+from urllib.robotparser import RobotFileParser
 import yaml
 
 class SpecimenAnalyser:
@@ -25,9 +26,9 @@ class SpecimenAnalyser:
     self.htpass = htpass
     self.folder_path = f'data/{self.id}'
     os.makedirs(self.folder_path, exist_ok = True)
-    robotFile = requests.get(baseUrl + robots)
+    robotFile = requests.get(baseUrl + robots, verify=False)
     if robotFile.status_code == 200:
-      self.robotParser = RobotsParser.from_string(robotFile.text)
+      self.robotParser = RobotFileParser(baseUrl + robots)
 
   def checkUrl(self, userAgent, path):
     if self.robotParser != None:
@@ -39,11 +40,11 @@ class SpecimenAnalyser:
       options = Options()
       options.add_argument('--headless')  # Running browser without UI.
       self.driver = webdriver.Firefox(options = options)
-    if self.htpass != None:
+    if self.htpass != None and self.htpass != None:
       self.driver.get(url.replace('https://', f'https://{self.htpass["user"]}:{self.htpass["pass"]}@'))
     else:
       self.driver.get(url)
-    time.sleep(10)
+    time.sleep(1)
     return self.driver.page_source
 
   def addLink(self, url):
@@ -147,7 +148,10 @@ with open('specimens.yml', 'r') as file:
   config = yaml.safe_load(file)
 
 for specimen in config['specimens']:
-  site = SpecimenAnalyser(specimen['id'], specimen['base_url'], '/robots.txt', specimen['htpass'])
+  if ('htpass' in specimen):
+    site = SpecimenAnalyser(specimen['id'], specimen['base_url'], '/robots.txt', specimen['htpass'])
+  else:
+    site = SpecimenAnalyser(specimen['id'], specimen['base_url'], '/robots.txt')
   pages = site.addLink('/')
   while len(pages) > 0:
     url = pages.pop()
